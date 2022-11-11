@@ -434,6 +434,12 @@ func (i *gatewayHandler) getOrHeadHandler(w http.ResponseWriter, r *http.Request
 		logger.Debugw("serving tar file", "path", contentPath)
 		i.serveTAR(r.Context(), w, r, resolvedPath, contentPath, begin, logger)
 		return
+	case "application/vnd.ipfs.ipns-record":
+		// TODO: i.handlePathResolution has been executed here, but we don't really need it. Should we check
+		// this beforehand?
+		logger.Debugw("serving ipns record", "path", contentPath)
+		i.serveIpnsRecord(r.Context(), w, r, contentPath, begin, logger)
+		return
 	default: // catch-all for unsuported application/vnd.*
 		err := fmt.Errorf("unsupported format %q", responseFormat)
 		webError(w, "failed respond with requested content type", err, http.StatusBadRequest)
@@ -866,6 +872,8 @@ func customResponseFormat(r *http.Request) (mediaType string, params map[string]
 			return "application/vnd.ipld.car", nil, nil
 		case "tar":
 			return "application/x-tar", nil, nil
+		case "ipns-record":
+			return "application/vnd.ipfs.ipns-record", nil, nil
 		}
 	}
 	// Browsers and other user agents will send Accept header with generic types like:
