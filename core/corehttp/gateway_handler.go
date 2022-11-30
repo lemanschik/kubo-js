@@ -435,10 +435,8 @@ func (i *gatewayHandler) getOrHeadHandler(w http.ResponseWriter, r *http.Request
 		i.serveTAR(r.Context(), w, r, resolvedPath, contentPath, begin, logger)
 		return
 	case "application/vnd.ipfs.ipns-record":
-		// TODO: i.handlePathResolution has been executed here, but we don't really need it. Should we check
-		// this beforehand?
 		logger.Debugw("serving ipns record", "path", contentPath)
-		i.serveIpnsRecord(r.Context(), w, r, contentPath, begin, logger)
+		i.serveIpnsRecord(r.Context(), w, r, resolvedPath, contentPath, begin, logger)
 		return
 	default: // catch-all for unsuported application/vnd.*
 		err := fmt.Errorf("unsupported format %q", responseFormat)

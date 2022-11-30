@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (i *gatewayHandler) serveIpnsRecord(ctx context.Context, w http.ResponseWriter, r *http.Request, contentPath ipath.Path, begin time.Time, logger *zap.SugaredLogger) {
+func (i *gatewayHandler) serveIpnsRecord(ctx context.Context, w http.ResponseWriter, r *http.Request, resolvedPath ipath.Resolved, contentPath ipath.Path, begin time.Time, logger *zap.SugaredLogger) {
 	if contentPath.Namespace() != "ipns" {
 		err := fmt.Errorf("%s is not an IPNS link", contentPath.String())
 		webError(w, err.Error(), err, http.StatusBadRequest)
@@ -33,6 +33,11 @@ func (i *gatewayHandler) serveIpnsRecord(ctx context.Context, w http.ResponseWri
 		webError(w, err.Error(), err, http.StatusInternalServerError)
 		return
 	}
+
+	// Set cache control headers. See the linked issue for improvements on
+	// IPNS caching based on keys' TTL.
+	// https://github.com/ipfs/kubo/issues/1818#issuecomment-1015849462
+	_ = addCacheControlHeaders(w, r, contentPath, resolvedPath.Cid())
 
 	// Set Content-Disposition
 	var name string
