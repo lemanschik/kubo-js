@@ -179,6 +179,7 @@ func TestCommands(t *testing.T) {
 		"/name/pubsub/state",
 		"/name/pubsub/subs",
 		"/name/resolve",
+		"/name/validate",
 		"/object",
 		"/object/data",
 		"/object/diff",
