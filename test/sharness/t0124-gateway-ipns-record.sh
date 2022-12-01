@@ -15,18 +15,12 @@ test_expect_success "Create and Publish IPNS Key" '
   test_should_contain "Hello IPFS" curl_output_filename
 '
 
-# TODO: Preferebly, we would have some CLI code that actually allows to validate the key??
-
 test_expect_success "GET KEY with format=ipns-record and validate key" '
-  curl "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY?format=ipns-record" > gw_key &&
-  ipfs routing get /ipns/$IPNS_KEY > cli_key &&
-  test_cmp cli_key gw_key
+  curl "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY?format=ipns-record" | ipfs name validate $IPNS_KEY
 '
 
 test_expect_success "GET KEY with 'Accept: application/vnd.ipfs.ipns-record' and validate key" '
-  curl -H "Accept: application/vnd.ipfs.ipns-record" "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY" > gw_key &&
-  ipfs routing get /ipns/$IPNS_KEY > cli_key &&
-  test_cmp cli_key gw_key
+  curl -H "Accept: application/vnd.ipfs.ipns-record" "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY" | ipfs name validate $IPNS_KEY
 '
 
 test_expect_success "GET KEY with format=ipns-record has expected HTTP headers" '
