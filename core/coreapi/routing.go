@@ -42,7 +42,7 @@ func (r *RoutingAPI) Get(ctx context.Context, key string) ([]byte, error) {
 
 	for e := range events {
 		if e.Type == routing.Value {
-			return []byte(e.Extra), nil
+			return base64.StdEncoding.DecodeString(e.Extra)
 		}
 	}
 
