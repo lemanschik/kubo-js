@@ -379,13 +379,14 @@ Different key types can specify other 'best' rules.
 	},
 	Encoders: cmds.EncoderMap{
 		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out []byte) error {
-			w.Write(out)
-			return nil
+			_, err := w.Write(out)
+			return err
 		}),
 	},
 	Type: []byte{},
 }
 
+// TODO: refactor this one.
 var putValueRoutingCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
 		Tagline: "Write a key/value pair to the routing system.",
