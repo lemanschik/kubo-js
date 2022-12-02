@@ -16,11 +16,11 @@ test_expect_success "Create and Publish IPNS Key" '
 '
 
 test_expect_success "GET KEY with format=ipns-record and validate key" '
-  curl "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY?format=ipns-record" | ipfs name validate $IPNS_KEY
+  curl "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY?format=ipns-record" | ipfs name verify-record $IPNS_KEY
 '
 
 test_expect_success "GET KEY with 'Accept: application/vnd.ipfs.ipns-record' and validate key" '
-  curl -H "Accept: application/vnd.ipfs.ipns-record" "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY" | ipfs name validate $IPNS_KEY
+  curl -H "Accept: application/vnd.ipfs.ipns-record" "http://127.0.0.1:$GWAY_PORT/ipns/$IPNS_KEY" | ipfs name verify-record $IPNS_KEY
 '
 
 test_expect_success "GET KEY with format=ipns-record has expected HTTP headers" '

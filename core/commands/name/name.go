@@ -70,16 +70,16 @@ Resolve the value of a dnslink:
 	},
 
 	Subcommands: map[string]*cmds.Command{
-		"publish":  PublishCmd,
-		"resolve":  IpnsCmd,
-		"validate": IpnsValidateCmd,
-		"pubsub":   IpnsPubsubCmd,
+		"publish":       PublishCmd,
+		"resolve":       IpnsCmd,
+		"pubsub":        IpnsPubsubCmd,
+		"verify-record": IpnsVerifyRecordCmd,
 	},
 }
 
-var IpnsValidateCmd = &cmds.Command{
+var IpnsVerifyRecordCmd = &cmds.Command{
 	Helptext: cmds.HelpText{
-		Tagline: "Validates an IPNS signed record.",
+		Tagline: "Verifies an IPNS Record.",
 	},
 	Arguments: []cmds.Argument{
 		cmds.StringArg("key", true, false, "The IPNS key to validate."),
