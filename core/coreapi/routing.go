@@ -13,7 +13,7 @@ import (
 type RoutingAPI CoreAPI
 
 func (r *RoutingAPI) Get(ctx context.Context, key string) ([]byte, error) {
-	dhtKey, err := ensureIPNSKey(key)
+	dhtKey, err := normalizeKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -53,12 +53,11 @@ func (r *RoutingAPI) Get(ctx context.Context, key string) ([]byte, error) {
 	return nil, errors.New("key not found")
 }
 
-// Shamelessly (mostly) copied from commands/routing.go
-func ensureIPNSKey(s string) (string, error) {
+func normalizeKey(s string) (string, error) {
 	parts := path.SplitList(s)
 	if len(parts) != 3 ||
 		parts[0] != "" ||
-		parts[1] != "ipns" {
+		!(parts[1] == "ipns" || parts[1] == "pk") {
 		return "", errors.New("invalid key")
 	}
 

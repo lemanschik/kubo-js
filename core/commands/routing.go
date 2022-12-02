@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -366,71 +365,25 @@ Different key types can specify other 'best' rules.
 		cmds.BoolOption(dhtVerboseOptionName, "v", "Print extra information."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		nd, err := cmdenv.GetNode(env)
+		api, err := cmdenv.GetApi(env, req)
 		if err != nil {
 			return err
 		}
 
-		if !nd.IsOnline {
-			return ErrNotOnline
-		}
-
-		dhtkey, err := escapeDhtKey(req.Arguments[0])
+		r, err := api.Routing().Get(req.Context, req.Arguments[0])
 		if err != nil {
 			return err
 		}
 
-		ctx, cancel := context.WithCancel(req.Context)
-		ctx, events := routing.RegisterForQueryEvents(ctx)
-
-		var getErr error
-		go func() {
-			defer cancel()
-			var val []byte
-			val, getErr = nd.Routing.GetValue(ctx, dhtkey)
-			if getErr != nil {
-				routing.PublishQueryEvent(ctx, &routing.QueryEvent{
-					Type:  routing.QueryError,
-					Extra: getErr.Error(),
-				})
-			} else {
-				routing.PublishQueryEvent(ctx, &routing.QueryEvent{
-					Type:  routing.Value,
-					Extra: base64.StdEncoding.EncodeToString(val),
-				})
-			}
-		}()
-
-		for e := range events {
-			if err := res.Emit(e); err != nil {
-				return err
-			}
-		}
-
-		return getErr
+		return res.Emit(r)
 	},
 	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *routing.QueryEvent) error {
-			pfm := pfuncMap{
-				routing.Value: func(obj *routing.QueryEvent, out io.Writer, verbose bool) error {
-					if verbose {
-						_, err := fmt.Fprintf(out, "got value: '%s'\n", obj.Extra)
-						return err
-					}
-					res, err := base64.StdEncoding.DecodeString(obj.Extra)
-					if err != nil {
-						return err
-					}
-					_, err = out.Write(res)
-					return err
-				},
-			}
-
-			verbose, _ := req.Options[dhtVerboseOptionName].(bool)
-			return printEvent(out, w, verbose, pfm)
+		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out []byte) error {
+			w.Write(out)
+			return nil
 		}),
 	},
-	Type: routing.QueryEvent{},
+	Type: []byte{},
 }
 
 var putValueRoutingCmd = &cmds.Command{
