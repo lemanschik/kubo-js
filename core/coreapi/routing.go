@@ -2,12 +2,10 @@ package coreapi
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 
 	"github.com/ipfs/go-path"
 	peer "github.com/libp2p/go-libp2p/core/peer"
-	"github.com/libp2p/go-libp2p/core/routing"
 )
 
 type RoutingAPI CoreAPI
@@ -18,39 +16,16 @@ func (r *RoutingAPI) Get(ctx context.Context, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	ctx, events := routing.RegisterForQueryEvents(ctx)
+	return r.routing.GetValue(ctx, dhtKey)
+}
 
-	var getErr error
-
-	go func() {
-		defer cancel()
-		var val []byte
-		val, getErr = r.routing.GetValue(ctx, dhtKey)
-		if getErr != nil {
-			routing.PublishQueryEvent(ctx, &routing.QueryEvent{
-				Type:  routing.QueryError,
-				Extra: getErr.Error(),
-			})
-		} else {
-			routing.PublishQueryEvent(ctx, &routing.QueryEvent{
-				Type:  routing.Value,
-				Extra: base64.StdEncoding.EncodeToString(val),
-			})
-		}
-	}()
-
-	for e := range events {
-		if e.Type == routing.Value {
-			return base64.StdEncoding.DecodeString(e.Extra)
-		}
+func (r *RoutingAPI) Put(ctx context.Context, key string, value []byte) error {
+	dhtKey, err := normalizeKey(key)
+	if err != nil {
+		return err
 	}
 
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-
-	return nil, errors.New("key not found")
+	return r.routing.PutValue(ctx, dhtKey, value)
 }
 
 func normalizeKey(s string) (string, error) {

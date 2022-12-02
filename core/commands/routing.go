@@ -417,16 +417,7 @@ identified by QmFoo.
 		cmds.BoolOption(dhtVerboseOptionName, "v", "Print extra information."),
 	},
 	Run: func(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {
-		nd, err := cmdenv.GetNode(env)
-		if err != nil {
-			return err
-		}
-
-		if !nd.IsOnline {
-			return ErrNotOnline
-		}
-
-		key, err := escapeDhtKey(req.Arguments[0])
+		api, err := cmdenv.GetApi(env, req)
 		if err != nil {
 			return err
 		}
@@ -442,50 +433,8 @@ identified by QmFoo.
 			return err
 		}
 
-		ctx, cancel := context.WithCancel(req.Context)
-		ctx, events := routing.RegisterForQueryEvents(ctx)
-
-		var putErr error
-		go func() {
-			defer cancel()
-			putErr = nd.Routing.PutValue(ctx, key, []byte(data))
-			if putErr != nil {
-				routing.PublishQueryEvent(ctx, &routing.QueryEvent{
-					Type:  routing.QueryError,
-					Extra: putErr.Error(),
-				})
-			}
-		}()
-
-		for e := range events {
-			if err := res.Emit(e); err != nil {
-				return err
-			}
-		}
-
-		return putErr
+		return api.Routing().Put(req.Context, req.Arguments[0], data)
 	},
-	Encoders: cmds.EncoderMap{
-		cmds.Text: cmds.MakeTypedEncoder(func(req *cmds.Request, w io.Writer, out *routing.QueryEvent) error {
-			pfm := pfuncMap{
-				routing.FinalPeer: func(obj *routing.QueryEvent, out io.Writer, verbose bool) error {
-					if verbose {
-						fmt.Fprintf(out, "* closest peer %s\n", obj.ID)
-					}
-					return nil
-				},
-				routing.Value: func(obj *routing.QueryEvent, out io.Writer, verbose bool) error {
-					fmt.Fprintf(out, "%s\n", obj.ID.Pretty())
-					return nil
-				},
-			}
-
-			verbose, _ := req.Options[dhtVerboseOptionName].(bool)
-
-			return printEvent(out, w, verbose, pfm)
-		}),
-	},
-	Type: routing.QueryEvent{},
 }
 
 type printFunc func(obj *routing.QueryEvent, out io.Writer, verbose bool) error
